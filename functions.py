@@ -52,3 +52,9 @@ def day_to_filename(day):
     """
     filename = day.lower().replace(" ", "") + ".csv"
     return filename
+
+
+# Custom sorting function
+def custom_sort(day):
+    # Extract the number part from the string
+    return int(day.split()[1])

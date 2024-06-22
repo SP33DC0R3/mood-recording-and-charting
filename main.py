@@ -1,7 +1,6 @@
 import streamlit as sl
 import pandas as pd
 import plotly.express as px
-import re
 from datetime import datetime
 import numpy as np
 import os
@@ -29,14 +28,16 @@ else:
     for file in os.listdir("./files"):
         files.append(file)
 
-day_name = []
+day_names = []
 for file in files:
     day = filename_to_day(file)
-    day_name.append(day)
+    day_names.append(day)
+
+day_names = sorted(day_names, key=custom_sort)
 
 if type_data == "View Previous Mood Charts":
     # Added selectbox and read the csv data
-    view_day = sl.selectbox("Select date to view", day_name,
+    view_day = sl.selectbox("Select date to view", day_names,
                             key="view_day")
     day_file = day_to_filename(view_day)
     df = pd.read_csv(f"files/{day_file}")
@@ -49,8 +50,8 @@ elif type_data == "Record Mood Data":
                         key="type_add")
     new_day = sl.button("Add New Day")
     if new_day:
-        new_day_file = increment_day(day_name[-1])
-        new_day_file = new_day_file.lower().replace(" ", "") + ".csv"
+        new_day_file = increment_day(day_names[-1])
+        new_day_file = day_to_filename(new_day_file)
         with open(f"./files/{new_day_file}", mode='w', newline='') as file:
             writer = csv.writer(file)
             writer.writerows(csv_format)
@@ -58,9 +59,8 @@ elif type_data == "Record Mood Data":
 
     if type_add == 'Record New Mood Data':
         new_day = sl.selectbox("Select the day you want to record your mood",
-                               day_name, key="new_day")
-        new_day = day_to_filename(new_day)
-        day_file = f"{new_day}.csv"
+                               day_names, key="new_day")
+        day_file = day_to_filename(new_day)
         df = pd.read_csv(f"files/{day_file}")
         new_time = sl.selectbox("select the time you want to record your mood",
                                 ("1st Record", "2nd Record", "3rd Record"), key='new_time')
@@ -78,14 +78,15 @@ elif type_data == "Record Mood Data":
                     formatted_time = now.strftime("%I:%M %p")
                     df.at[time_num - 1, "timestamp"] = formatted_time
                     df.at[time_num - 1, "mood"] = new_mood_val
-                    df.to_csv(day_file, index=False)
+                    df.to_csv(f"./files/{day_file}", index=False)
+
+                    sl.success("Data Saved Successfully")
         else:
             sl.write(f"Your mood was already recorded on ***{timestamp}*** and your mood was ***{mood_val}***")
     elif type_add == 'Add Previously Recorded Data':
         prev_day = sl.selectbox("Select the day you want to recorded your mood",
-                                day_name, key='prev_day')
-        prev_day = day_to_filename(prev_day)
-        day_file = f"{prev_day}.csv"
+                                day_names, key='prev_day')
+        day_file = day_to_filename(prev_day)
         df = pd.read_csv(f"files/{day_file}")
 
         curr_time = sl.selectbox("Select the timestamp you recorded your mood",
